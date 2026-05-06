@@ -1,0 +1,20 @@
+{
+  "name": "marcin-elj",
+  "description": "Marcin Eljasz's Claude Code plugins — opinionated tooling for solo mobile-app development with React Native, Supabase, and EAS.",
+  "owner": {
+    "name": "Marcin Eljasz",
+    "email": "deep.journey.app@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "kto-ma-racje-toolkit",
+      "description": "Full toolkit: audit, TDD, lessons, agent teams, search mastery, vibesec, subagent-driven dev, plus SessionStart auto-load for the kto-ma-racje project.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": {
+        "name": "Marcin Eljasz",
+        "email": "deep.journey.app@gmail.com"
+      }
+    }
+  ]
+}

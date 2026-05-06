@@ -1,0 +1,22 @@
+{
+  "name": "kto-ma-racje-toolkit",
+  "description": "Marcin's personal Claude Code toolkit — bundles full-audit, lessons-update, TDD workflow, agent teams, search-tools-mastery, vibesec, subagent-driven-development. Includes auto-load-lessons SessionStart hook for the kto-ma-racje project.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Marcin Eljasz",
+    "email": "deep.journey.app@gmail.com"
+  },
+  "homepage": "https://github.com/marcin-elj/kto-ma-racje-toolkit",
+  "repository": "https://github.com/marcin-elj/kto-ma-racje-toolkit",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "skills",
+    "audit",
+    "tdd",
+    "lessons",
+    "react-native",
+    "supabase",
+    "kto-ma-racje"
+  ]
+}
