@@ -1,7 +1,7 @@
 {
   "name": "kto-ma-racje-toolkit",
   "description": "Marcin's personal Claude Code toolkit — bundles full-audit, lessons-update, TDD workflow, agent teams, search-tools-mastery, vibesec, subagent-driven-development. Includes auto-load-lessons SessionStart hook for the kto-ma-racje project.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "Marcin Eljasz",
     "email": "deep.journey.app@gmail.com"

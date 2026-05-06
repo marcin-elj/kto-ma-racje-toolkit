@@ -1,6 +1,6 @@
 ---
 name: full-audit
-description: Kompletny, wielowymiarowy audyt aplikacji "Kto Ma Rację?". Uruchom gdy user poprosi o "pełny audyt", "full audit" lub "audyt aplikacji". Uruchamia 10 agentów równolegle i dostarcza zbiorczy raport BLOCKER/WARNING/INFO. Wersja v2 (po retrospektywie 2026-05-01) — dodane: schema drift, lifecycle matrix, anti-pattern sweep repo-wide, cross-function consistency, fix-induced regression detection.
+description: 'Kompletny, wielowymiarowy audyt aplikacji "Kto Ma Rację?". Uruchom gdy user poprosi o "pełny audyt", "full audit" lub "audyt aplikacji". Uruchamia 10 agentów równolegle i dostarcza zbiorczy raport BLOCKER/WARNING/INFO. Wersja v2 (po retrospektywie 2026-05-01) — dodane: schema drift, lifecycle matrix, anti-pattern sweep repo-wide, cross-function consistency, fix-induced regression detection.'
 ---
 
 Przeprowadź KOMPLETNY, WIELOWYMIAROWY audyt aplikacji "Kto Ma Rację?".
