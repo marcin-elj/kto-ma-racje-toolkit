@@ -9,6 +9,16 @@ recognition by keyword; full content read lazily via Read tool when match.
 Token cost: ~3k (vs ~12k full load).
 
 CWD guard: only fires when session cwd is inside kto-ma-racje project tree.
+
+Memory location (v0.1.2 change):
+1. Prefer REPO memory at <repo>/memory/ — walk up from CWD looking for
+   memory/MEMORY.md. This is the canonical, versioned location since
+   PR #146 in kto-ma-racje repo. Works on any fresh clone / new machine
+   immediately after `git pull` — no per-machine sync needed.
+2. Fall back to GLOBAL per-machine cache at
+   ~/.claude/projects/D--Projects-kto-ma-racje/memory/ if no repo memory
+   found (covers branches that don't have memory/ yet, or sessions
+   running outside the worktree).
 """
 
 import json
@@ -17,19 +27,53 @@ import sys
 import glob
 
 
+def find_repo_memory(start: str, max_levels: int = 12) -> str | None:
+    """Walk up from `start` looking for a `memory/MEMORY.md` file.
+
+    Returns the absolute `memory/` directory path if found within
+    `max_levels` ancestors, else None. Guards against infinite loops
+    by counting levels and stopping at filesystem root.
+
+    Why MEMORY.md specifically: any project might have a `memory/`
+    folder for unrelated reasons. The presence of MEMORY.md (our
+    index file) is a strong signal that this is the kmr memory dir.
+    """
+    cur = os.path.abspath(start)
+    for _ in range(max_levels):
+        candidate = os.path.join(cur, "memory")
+        if os.path.isdir(candidate) and os.path.isfile(
+            os.path.join(candidate, "MEMORY.md")
+        ):
+            return candidate
+        parent = os.path.dirname(cur)
+        if parent == cur:  # filesystem root
+            return None
+        cur = parent
+    return None
+
+
 def main() -> None:
     # CWD guard
     cwd = os.getcwd().replace("\\", "/").lower()
     if "kto-ma-racje" not in cwd:
         sys.exit(0)
 
-    memory_dir = os.path.join(
-        os.path.expanduser("~"),
-        ".claude",
-        "projects",
-        "D--Projects-kto-ma-racje",
-        "memory",
-    )
+    # Prefer repo-versioned memory (canonical since PR #146 in kto-ma-racje).
+    # Walk up from CWD looking for memory/MEMORY.md.
+    memory_dir = find_repo_memory(os.getcwd())
+    source = "repo"
+
+    if memory_dir is None:
+        # Fall back to global per-machine cache (legacy behavior).
+        memory_dir = os.path.join(
+            os.path.expanduser("~"),
+            ".claude",
+            "projects",
+            "D--Projects-kto-ma-racje",
+            "memory",
+        )
+        source = "global-cache"
+
     if not os.path.isdir(memory_dir):
         sys.exit(0)
 
@@ -80,7 +124,7 @@ def main() -> None:
         sys.exit(0)
 
     intro = (
-        "Auto-loaded for kto-ma-racje session.\n\n"
+        f"Auto-loaded for kto-ma-racje session (source: {source}).\n\n"
         "STRUCTURE:\n"
         "1. working_memory.md = current operational state (focus, in-flight, "
         "decisions). Edit directly without confirm.\n"
