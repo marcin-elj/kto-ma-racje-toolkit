@@ -32,6 +32,14 @@ Zanim zaczniesz — przeczytaj:
 
 Uruchom **10 agentów równolegle**, każdy na innym obszarze. Zbierz wszystkie wyniki i dostarcz jeden zbiorczy raport z priorytetami BLOCKER / WARNING / INFO.
 
+## ⚠️ Subagent type — KRYTYCZNE
+
+**WSZYSTKIE 10 agentów MUSI używać `subagent_type: "general-purpose"`.** NIE używaj `Explore` dla żadnego.
+
+Powód (lesson 2026-05-17): full-audit dispatched 10 agentów, 7/10 padło natychmiast z "Prompt is too long" — wszystkie 7 miały `Explore`, wszystkie 3 które przeszły miały `general-purpose`. `Explore` ma mniejszy input prompt budget bo jego system prompt jest bogatszy (search strategies, breadth modes). Audyt = open-ended cross-cutting analysis = dokładnie ten case dla którego tool description literalnie mówi "Do NOT use Explore for code review, design-doc auditing, cross-file consistency checks, or open-ended analysis".
+
+Jeśli mimo `general-purpose` któryś agent padnie z "Prompt is too long" — skróć tylko jego prompt, nie wszystkich. Patrz `memory/lesson_full_audit_subagent_type_choice.md`.
+
 ---
 
 ## AGENT 1: FLOW UŻYTKOWNIKA — END-TO-END
