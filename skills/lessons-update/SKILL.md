@@ -1,6 +1,6 @@
 ---
 name: lessons-update
-description: Wspólna nauka — po każdym fix-phase / multi-file change / non-trivial task przejrzyj sesję i zdecyduj czy warto zapisać lekcję (nową lub update istniejącej). Triggeruj proaktywnie po PR-ach, fazach audytu, zamknięciu commit'u, każdej okazji gdy coś poszło nie tak / fix wprowadził nowy bug / wykryłem powtarzający się pattern. Skip dla trivial reads, pure refactors bez błędów, doc updates. ALWAYS-CONFIRM przed zapisem.
+description: Wspólna nauka — po każdym fix-phase / multi-file change / non-trivial task przejrzyj sesję i zdecyduj czy warto zapisać lekcję (nową lub update istniejącej). Triggeruj proaktywnie po PR-ach, fazach audytu, zamknięciu commit'u, każdej okazji gdy coś poszło nie tak / fix wprowadził nowy bug / wykryłem powtarzający się pattern. Skip dla trivial reads, pure refactors bez błędów, doc updates. Auto-save bez pytania (od 2026-07-04); po zapisie pokaż zwięźle co zapisane.
 ---
 
 # Lessons Update — wspólny skill nauki
@@ -104,24 +104,24 @@ Plus jeśli reflection ujawnia **nową fasetę patternu** której wcześniej nie
 - Dopisz do **How to apply** nowy bullet
 - Update **Reguła** jeśli się rozjeżdża (rzadko — większość patternów jest stała)
 
-### Krok 6: ALWAYS-CONFIRM gate
+### Krok 6: Auto-save + pokaż po zapisie (decyzja Marcina 2026-07-04)
 
-**Zanim zapiszesz**, pokaż userowi:
+**Zapisuj BEZ pytania o zgodę** — jak auto-capture mózgu dowodzenia (Second
+Brain). Lekcje trafiają do grafu Obsidiana automatycznie (junction
+`kmr-memory/`), więc mózg uczy się z automatu.
+
+Po zapisie pokaż userowi ZWIĘŹLE co zapisałeś (tytuł + reguła w 1 zdaniu per
+lekcja), żeby mógł zawetować:
 
 ```
-Proponuję [nową lekcję | update lesson_X]:
-
-═══════════════════════════════════
-<draft content>
-═══════════════════════════════════
-
-Decyzja:
-- ok / save → zapisuję
-- skip / nie warto → pomijam
-- change <co zmienić> → poprawiam
+Zapisane lekcje:
+- [nowa] lesson_X — <reguła 1 zdanie>
+- [update] lesson_Y — occurrence: <co doszło>
+(cofnij/zmień: powiedz którą)
 ```
 
-User decyduje. NIE zapisuj automatycznie.
+_(Historyczne: do 2026-07-04 obowiązywał ALWAYS-CONFIRM gate — zniesiony
+jawną decyzją Marcina w sesji 2026-07-04.)_
 
 ### Krok 7: MEMORY.md index update (jeśli nowa lekcja)
 
