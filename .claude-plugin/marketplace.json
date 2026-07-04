@@ -9,7 +9,7 @@
     {
       "name": "kto-ma-racje-toolkit",
       "description": "Full toolkit: audit, TDD, lessons, agent teams, search mastery, vibesec, subagent-driven dev, plus SessionStart auto-load for the kto-ma-racje project.",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "source": "./",
       "author": {
         "name": "Marcin Eljasz",
