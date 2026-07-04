@@ -204,8 +204,12 @@ Done!
 **vs. Manual execution:**
 - Subagents follow TDD naturally
 - Fresh context per task (no confusion)
-- Parallel-safe (subagents don't interfere)
 - Subagent can ask questions (before AND during work)
+
+> ⚠️ **NIE parallel-safe dla implementerów** (`lesson_parallel_subagent_worktree_race`):
+> 2 subagenty piszące w tym samym repo = `git checkout` stomp. Implementery
+> dispatchuj **sekwencyjnie**, albo z `isolation: worktree` per subagent.
+> Równolegle bezpieczne są tylko READ-ONLY agenci (analiza/audyt).
 
 **vs. Executing Plans:**
 - Same session (no handoff)
@@ -224,6 +228,8 @@ Done!
 - Review loops ensure fixes actually work
 - Spec compliance prevents over/under-building
 - Code quality ensures implementation is well-built
+- **Controller weryfikuje ZEWNĘTRZNIE** (`lesson_subagent_output_verification`): po „DONE" implementera uruchom testy SAM / grep zmienione pliki — self-report („8/8 passing", „all good") ≠ dowód (paste-cache false positives, halucynowane wyniki)
+- Reviewer jakości: nie duplikuj checków CI (`pr-checks.yml`: tsc/deno test/hooks-lint/anti-pattern-lint/tier-grep biegną na PR) — skup się na tym, czego gate nie widzi (integracja cross-file, semantyka, edge case'y)
 
 **Cost:**
 - More subagent invocations (implementer + 2 reviewers per task)

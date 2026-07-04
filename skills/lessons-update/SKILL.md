@@ -84,7 +84,7 @@ type: lesson | feedback
 **How to apply**:
 - <konkretny check do wykonania w przyszłości — bullet point>
 - <grep / pattern / file path do sprawdzania>
-- <link do related lesson jeśli pasuje>
+- Related: `[[lesson_x]]` — **linkuj wikilinkami**; lekcje żyją w grafie Obsidiana przez junction `kmr-memory/`, więc `[[...]]` wiąże je w mózgu (a `[[nieistniejące]]` = TODO na przyszłą lekcję, nie błąd)
 
 **Occurrences**:
 - <data> — <session ID jeśli masz, inaczej krótki opis>: <co się stało>
@@ -103,6 +103,15 @@ Jeśli pattern się powtórzył, dopisz **nowy occurrence** do istniejącej lekc
 Plus jeśli reflection ujawnia **nową fasetę patternu** której wcześniej nie było:
 - Dopisz do **How to apply** nowy bullet
 - Update **Reguła** jeśli się rozjeżdża (rzadko — większość patternów jest stała)
+
+**⚠️ Automat > lekcja (OBOWIĄZKOWE gdy occurrence ≥2)**: jeśli po dopisaniu tej
+lekcja ma **≥2 wystąpienia**, NIE kończ na dopisku „occurrence". Zaproponuj
+mechanizm czyniący nawrót niemożliwym: check w `pr-checks.yml` (wzorce:
+`tier-grep`, `anti-pattern-lint`, `migration-lint`, `memory-index-size`), hook,
+DB constraint, config w repo, krok skilla. Dowód (meta-audyt 2026-07-03): nawracały
+WYŁĄCZNIE reguły pamięciowe; frykcje domknięte automatem nie wróciły ani razu.
+Jeśli pattern jest grep-owalny — automat już od 1. wystąpienia. Poniedziałkowa
+meta-nauka konsumuje occurrence-count właśnie po to.
 
 ### Krok 6: Auto-save + pokaż po zapisie (decyzja Marcina 2026-07-04)
 
@@ -131,7 +140,7 @@ Po zapisie nowej lekcji:
 3. Format: `- [<title>](<file>.md) — <hook keyword + jednozdaniowa esencja>`
 4. **Optymalizuj pod recognition** — keyword który mam zobaczyć w kodzie aby skojarzyć z lekcją
 
-Limity: MEMORY.md ≤ 200 linii / ≤ 10KB. Jeśli przekracza, zaproponuj `/anthropic-skills:consolidate-memory`.
+Limit: MEMORY.md ≤ **24 400 B** (twardy gate CI `memory-index-size` w `.github/workflows/pr-checks.yml`; WARN od 23 500 B — skalibrowany na punkt ucięcia SessionStart auto-load). Przy przekroczeniu: konsolidacja wpisów do formatu „keyword — one-liner ≤200 znaków" (`/anthropic-skills:consolidate-memory`); detale należą do plików lekcji, nie do indeksu.
 
 ### Krok 8: Confirm save + close
 
@@ -139,7 +148,7 @@ Po zapisie potwierdź userowi:
 ```
 ✅ Saved: <path>
 Index updated: <one-liner added/refreshed>
-Active in next session via SessionStart hook (~/.claude/hooks/auto-load-lessons-kmr.sh).
+Active in next session via SessionStart hook pluginu (`${CLAUDE_PLUGIN_ROOT}/hooks/auto-load-lessons-kmr.cmd`); w sesjach remote-control (cloud, gdzie `.cmd` nie odpala) — przez `/session-start`.
 ```
 
 ## Heuristyki jakości lekcji
@@ -165,7 +174,7 @@ Zanim invoke'uję ten skill, zadaj sobie:
 ## Integracja z innymi skillami
 
 - **`full-audit` v2**: na końcu każdej fazy audytu (Faza 1/3/4/5/...) explicit wskazuje "now invoke lessons-update". Dodaj sentence do report sekcji "PLAN NAPRAWY" w full-audit.
-- **`anthropic-skills:consolidate-memory`**: gdy MEMORY.md > 200 linii, ten skill prosi o uruchomienie consolidate-memory zamiast dalej dorzucać.
+- **`anthropic-skills:consolidate-memory`**: gdy MEMORY.md zbliża się do 24 400 B (gate CI), ten skill prosi o uruchomienie consolidate-memory zamiast dalej dorzucać.
 - **`session-summary`**: na koniec sesji może wywołać lessons-update jako ostatni step.
 
 ## Auto-detect project

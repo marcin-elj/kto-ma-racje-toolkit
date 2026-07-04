@@ -9,6 +9,16 @@ description: This skill helps Claude write secure web applications. Use this whe
 
 This guide provides comprehensive secure coding practices for web applications. As an AI assistant, your role is to approach code from a **bug hunter's perspective** and make applications **as secure as possible** without breaking functionality.
 
+> ## ⚠️ Profil kto-ma-racje (czytaj PRZED użyciem tej checklisty)
+>
+> To generyczny web-doc; projekt to **React Native + Expo + Supabase** (LIVE w obu sklepach). Dopasuj:
+> - **Auth storage**: RN nie ma cookies/httpOnly/localStorage. Sesja Supabase w **AsyncStorage** = poprawna, NIE flaguj jako finding (sekcje o „token in localStorage → httpOnly cookies" = web-only).
+> - **Env prefix**: jedyny publiczny prefix to **`EXPO_PUBLIC_*`** (nie NEXT_PUBLIC/REACT_APP) — tylko wartości publiczne; sekrety wyłącznie w edge fns / GH Secrets.
+> - **Największa realna klasa luk = Supabase RLS** (nie CSRF/XXE/SQLi — klient nie pisze SQL, PostgREST+RLS): każda `SECURITY DEFINER` → `REVOKE ... FROM anon/PUBLIC` w tej samej migracji (egzekwuje CI `migration-lint`); tabela z client `.delete()` → **explicit DELETE policy** (PostgREST zwraca sukces przy 0 rows — `lesson_rls_silent_delete_failure`); `archived_at IS NULL` w SELECT+UPDATE+DELETE (RODO leak); advisor `multiple_permissive_policies` = sygnał. Lekcje: `lesson_security_definer_revoke_anon`, `lesson_rls_archived_at_all_crud`, `lesson_rls_policy_rename_orphan`.
+> - **Sekrety**: nowe wycieki w PR łapie gate `gitleaks` w `pr-checks.yml` — audyt ręczny tylko dla historii / plików poza git.
+> - **Prompt injection** (7 edge fns woła Claude API) → skill `supabase-edge-function` (wrap user input w markery, sanitize `display_name`, field caps).
+> - Sekcje **CSRF/XXE/GraphQL** = web-only; skip dla klienta RN, stosuj do ewentualnego web dashboardu.
+
 **Key Principles:**
 - Defense in depth: Never rely on a single security control
 - Fail securely: When something fails, fail closed (deny access)

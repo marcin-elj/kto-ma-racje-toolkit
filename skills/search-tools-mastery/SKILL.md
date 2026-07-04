@@ -7,6 +7,19 @@ description: Use when searching a codebase to pick the right tool for the job �
 
 > **Master the art of code search by combining the right tools for maximum efficiency**
 
+> ## ⚠️ Środowisko kto-ma-racje (czytaj PIERWSZE — reszta to obcy dokument)
+>
+> **grepai / Serena / ast-grep NIE są zainstalowane** w tym środowisku (0 trafień w sesji MCP i w `memory/reference_integrations.md`). Sekcje o nich = „gdyby kiedyś doinstalować" (instalacja MCP → na KONIEC sesji, per meta-audyt). **Nie wołaj `serena ...` / `grepai ...`** — to halucynacje.
+>
+> Realne mapowanie intencji → tool:
+> - **znana nazwa / exact text** → `Grep` (rg)
+> - **plik po ścieżce/wzorcu** → `Glob`
+> - **koncept / intencja / „gdzie to się dzieje"** → subagent `Explore` (breadth: medium/very thorough)
+> - **struktura (funkcje, importy)** → `Grep` z regex / `multiline: true`
+> - **powtarzalny anti-pattern** → nie szukaj ręcznie co sesję: dodaj check do `anti-pattern-lint` / `tier-grep` w `pr-checks.yml` (`lesson_anti_pattern_repo_sweep` → grep CAŁE repo, potem automat)
+>
+> Sekcje „Further Reading", ścieżki `/Users/florianbruniaux/...` i fragment francuski = martwe, ignoruj. Pełne przepisanie skilla = osobne zadanie (patrz `working_memory` follow-up).
+
 **Author**: Florian BRUNIAUX | Contributions from Claude (Anthropic)
 **Reading time**: ~20 minutes
 **Last updated**: January 2026

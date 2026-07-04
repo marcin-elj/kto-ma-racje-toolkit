@@ -343,7 +343,7 @@ Then I'll implement to pass those tests.
 
 ### With pre-deploy-audit skill
 
-The kto-ma-racje pre-deploy-audit skill (13 checks) is the **last gate** before deploy. TDD is the **first gate** — tests written before implementation. They compose:
+The kto-ma-racje pre-deploy-audit skill (18 checks) is the **last gate** before deploy. TDD is the **first gate** — tests written before implementation. Between them: CI `pr-checks.yml` (od PR #289) biegnie na KAŻDYM PR (tsc, deno test, hooks-lint, anti-pattern-lint, tier-grep, migration-lint, gitleaks, memory-index-size) — nie buduj lokalnych hooków duplikujących te checki. They compose:
 
 - TDD catches design-level bugs early (wrong shape, missing state)
 - pre-deploy-audit catches integration-level bugs late (RLS leaks, secrets, hardcoded strings)
@@ -425,7 +425,7 @@ This anti-pattern shipped in PR #159 (pair-show.tsx) and lived <2 hours in produ
 "Run the actual commands yourself and paste output."
 ```
 
-State-not-thrown bugs slip past subagent verification. See `memory/lesson_audit_self_report_distrust.md`.
+State-not-thrown bugs slip past subagent verification. See `memory/lesson_subagent_output_verification.md`.
 
 ---
 
@@ -667,7 +667,7 @@ Run tests after each change to ensure they stay green.
 ## See Also
 
 ### Same plugin (kto-ma-racje-toolkit)
-- [pre-deploy-audit](../pre-deploy-audit/SKILL.md) — 13-step gate before merge / build
+- pre-deploy-audit — 18-step gate before merge / build (skill w repo aplikacji: `.claude/skills/pre-deploy-audit/`, nie w tym pluginie)
 - [full-audit](../full-audit/SKILL.md) — Multi-agent comprehensive audit
 - [lessons-update](../lessons-update/SKILL.md) — After each fix-phase, ask whether a lesson should land in `memory/`
 - [agent-teams-quick-start](../agent-teams-quick-start/SKILL.md) — Multi-perspective review for high-stakes changes
@@ -684,7 +684,7 @@ Run tests after each change to ensure they stay green.
 - `memory/lesson_useeffect_guard_shared_with_ui_state.md` — Spinner deadlock anti-pattern (PR #159→#160)
 - `memory/lesson_auth_profile_fetch_race.md` — useEffect fire-and-forget + INSERT race (PR #116)
 - `memory/lesson_supabase_onauth_event_filter.md` — TOKEN_REFRESHED filter (PR #135)
-- `memory/lesson_audit_self_report_distrust.md` — "TS clean + verified" ≠ "działa"
+- `memory/lesson_subagent_output_verification.md` — "TS clean + verified" ≠ "działa"
 - `memory/lesson_dead_buttons_silent_returns.md` — `if (!user) return` without Alert
 - `memory/lesson_realtime_race_concurrent_triggers.md` — Double-fire from Realtime fanout
 - `memory/lesson_anti_pattern_repo_sweep.md` — Found one instance? Grep the whole repo.

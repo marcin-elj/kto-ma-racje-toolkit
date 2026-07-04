@@ -6,7 +6,18 @@ description: Use when planning multi-perspective audits, security PR reviews, pr
 # Agent Teams Quick Start Guide
 
 > **Practical guide for using agent teams in your projects**
-> **Reading time**: 8-10 min | **Full documentation**: [Agent Teams](./agent-teams.md) (30 min overview)
+
+> ## ⚠️ Środowisko kto-ma-racje (czytaj PIERWSZE — reszta to obcy dokument)
+>
+> Ignoruj setup z env-flagą (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`), wersje CLI i pinned snapshoty modeli (`claude-opus-4-6-20250624` — CI blokuje datowane snapshoty). Realny mechanizm w tym projekcie:
+> - **Równoległe wywołania toola `Agent` w JEDNEJ wiadomości** (tak działa `full-audit` na 10-11 agentach — bez żadnej env-flagi).
+> - **Typ subagenta**: `general-purpose` dla open-ended audytów/analiz (Explore ma mniejszy prompt budget → pada „Prompt too long"; `lesson_full_audit_subagent_type_choice`).
+> - **Agenci PISZĄCY**: sekwencyjnie albo `isolation: worktree` (2 pisze w tym samym repo = checkout stomp; `lesson_parallel_subagent_worktree_race`). Równolegle tylko READ-ONLY.
+> - **Weryfikuj findingi zewnętrznie**: grep/komenda PRZED wpisaniem do raportu — self-report ≠ prawda (`lesson_subagent_output_verification`).
+> - **Audyt kmr przed release → użyj `/full-audit`** (pełna 10-11-agentowa implementacja), nie ad-hoc teamu.
+> - Kiedy warto (decision matrix z CLAUDE.md Etap 4): high-stakes / multi-perspective. NIE dla trywialnych zmian (3× token cost).
+>
+> Linki `./agent-teams.md` i ścieżki `/Users/florianbruniaux/...` = martwe. Pełne przepisanie = osobne zadanie (patrz `working_memory` follow-up).
 
 ## What is This?
 
