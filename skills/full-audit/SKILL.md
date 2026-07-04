@@ -1,6 +1,6 @@
 ---
 name: full-audit
-description: 'Kompletny, wielowymiarowy audyt aplikacji "Kto Ma Rację?". Uruchom gdy user poprosi o "pełny audyt", "full audit" lub "audyt aplikacji". Uruchamia 10 agentów równolegle i dostarcza zbiorczy raport BLOCKER/WARNING/INFO. Wersja v2 (po retrospektywie 2026-05-01) — dodane: schema drift, lifecycle matrix, anti-pattern sweep repo-wide, cross-function consistency, fix-induced regression detection.'
+description: 'Kompletny, wielowymiarowy audyt aplikacji "Kto Ma Rację?". Uruchom gdy user poprosi o "pełny audyt", "full audit" lub "audyt aplikacji". Uruchamia 11 agentów równolegle i dostarcza zbiorczy raport BLOCKER/WARNING/INFO. Wersja v3 (2026-07-04) — dodane: decisions ledger z mózgu (vault+memory), derive-dont-hardcode, obowiązkowa weryfikacja findingów, agent Analytics & observability, tryb delta, wynik audytu do vaulta.'
 ---
 
 Przeprowadź KOMPLETNY, WIELOWYMIAROWY audyt aplikacji "Kto Ma Rację?".
@@ -17,6 +17,10 @@ Przeprowadź KOMPLETNY, WIELOWYMIAROWY audyt aplikacji "Kto Ma Rację?".
 
 **RODO per-lifecycle, nie tylko delete-account.** Cross-partner PII access matrix per event: signup / pair-create / dispute / pair-unpair / partner-deleted / account-delete. Każdy event ma inny cleanup contract.
 
+**Świadome decyzje ≠ bugi (v3).** Część „nieprawidłowości" to jawne decyzje Marcina (np. email confirm OFF od 2026-05-15, Google Ads zawieszone = zero akwizycji Android, brak definicji eventu w PostHogu przy śladowym wolumenie). Bez decisions ledger audytor produkuje fałszywe BLOCKERY. Ledger budujesz w pre-audit i WSTRZYKUJESZ każdemu agentowi.
+
+**Derive, don't hardcode (v3).** Liczby i listy (capy tierów, lista fns AI, model subskrypcji, wersje) wyprowadzaj z żywych źródeł w momencie audytu (`lib/tier.ts`, grep po funkcjach, `memory/tech_state.md`) — stałe zaszyte w tym skillu gniją między wydaniami (lesson_automation_prompt_names_drift; w v2 zgniły capy, liczba fns AI i model subskrypcji).
+
 ---
 
 ## Pre-audit checklist
@@ -30,11 +34,31 @@ Zanim zaczniesz — przeczytaj:
 6. Pamięć (`memory/lesson_*.md`, `memory/feedback_*.md`) — znane anti-patterns do sweep'u
 7. Ostatnie 5 commitów w git log — zrozum co się ostatnio zmieniło
 
-Uruchom **10 agentów równolegle**, każdy na innym obszarze. Zbierz wszystkie wyniki i dostarcz jeden zbiorczy raport z priorytetami BLOCKER / WARNING / INFO.
+### Decisions ledger — mózg przed dispatchem (v3, OBOWIĄZKOWE)
+
+Zbuduj listę „świadome stany — NIE flagować jako bug" i wklej ją do promptu KAŻDEGO agenta:
+1. `memory/project_*.md` — wszystkie (aktywne decyzje: email confirm OFF, zawieszone Google Ads, pricing tiers, social login status…)
+2. Vault (mózg Jarvisa, `D:\SecondBrain`): huby `projekty/kto-ma-racje.md`, `projekty/kmr-growth.md`, `projekty/google-ads-zawieszenie.md`, `projekty/apple-search-ads.md` + sekcja Decyzje w `warsztat/second-brain.md`
+3. Najnowszy digest `D:\SecondBrain\projekty\kmr-digesty\` (lub rollup tygodniowy) — bieżące anomalie już ZNANE (nie odkrywaj ich ponownie jako findings)
+4. Format ledgera: `- <stan> — decyzja/kontekst (źródło) — NIE flagować`
+
+### Żywe źródła prawdy (v3 — derive, don't hardcode)
+
+Przed dispatchem wyprowadź i wklej agentom:
+- **Capy tierów**: przeczytaj `lib/tier.ts` + `supabase/functions/_shared/tier-limits.ts` (flaguj rozjazd między nimi — to jest finding; NIE porównuj z liczbami z tego skilla)
+- **Lista fns AI**: `grep -l "anthropic" supabase/functions/*/index.ts` — WSZYSTKIE znalezione porównujesz w Agent 5 (2026-07: było ich 7, nie 4)
+- **Model subskrypcji**: `memory/tech_state.md` (2026-07: hybryda per-user — `profiles.subscription_*` + RPC `effective_tier_for_user` max-of-pair)
+- **Stan CI**: `gh run list --limit 5` — jeśli pr-checks czerwone, to finding sam w sobie
+
+Uruchom **11 agentów równolegle**, każdy na innym obszarze. Zbierz wszystkie wyniki i dostarcz jeden zbiorczy raport z priorytetami BLOCKER / WARNING / INFO.
+
+### Tryb delta (opcjonalny)
+
+Gdy user poda punkt odniesienia („audyt od ostatniego audytu / od daty X / od taga"), agenci 1-7 i 11 priorytetyzują pliki z `git log --since=<X> --name-only` (pełna głębia tylko na diffie), a pełne repo-wide sweepy zostają wyłącznie w Agentach 8-10. Bez parametru = pełny audyt.
 
 ## ⚠️ Subagent type — KRYTYCZNE
 
-**WSZYSTKIE 10 agentów MUSI używać `subagent_type: "general-purpose"`.** NIE używaj `Explore` dla żadnego.
+**WSZYSTKIE 11 agentów MUSI używać `subagent_type: "general-purpose"`.** NIE używaj `Explore` dla żadnego.
 
 Powód (lesson 2026-05-17): full-audit dispatched 10 agentów, 7/10 padło natychmiast z "Prompt is too long" — wszystkie 7 miały `Explore`, wszystkie 3 które przeszły miały `general-purpose`. `Explore` ma mniejszy input prompt budget bo jego system prompt jest bogatszy (search strategies, breadth modes). Audyt = open-ended cross-cutting analysis = dokładnie ten case dla którego tool description literalnie mówi "Do NOT use Explore for code review, design-doc auditing, cross-file consistency checks, or open-ended analysis".
 
@@ -81,6 +105,21 @@ Przetestuj każdą możliwą ścieżkę użytkownika od początku do końca. Dla
 - Co jeśli jeden partner odmówi "Zgadzam się" przy reveal?
 - Co jeśli partner usunie konto w trakcie aktywnego sporu?
 
+**Solo / Trening (v3 — od 1.2.0):**
+- Mapa scenariuszy → szczegóły → sesja czatu (`app/solo/[sessionId].tsx`) → debrief z gwiazdkami → tablica postępów
+- „Kontynuuj rozmowę" przy aktywnej sesji (porzucenie NIE pali slotu — verify)
+- Cap sesji per tier (pill X/Y w headerze) + rewarded-ad bonus (`grant_solo_bonus` RPC) + flow po wyczerpaniu limitu
+- Interstitial na exit z debriefu — czy nie strzela w środku flow?
+
+**Social login (v3 — od 1.2.0):**
+- Google Sign-In i Apple Sign-In: happy path → profil utworzony → routing jak email signup
+- Anulowanie w połowie OAuth → czy user nie ląduje w limbo?
+- Konto email istnieje + logowanie social tym samym adresem → co się dzieje?
+
+**Win-back / referral (v3):**
+- Deep link `/win-back` i `/referral` → screen istnieje, suppression w `isInterruptSuppressedRoute`, pricing z RC (nie hardcoded)
+- `redeem_referral_code` RPC — happy + błędne kody
+
 **Logowanie i sesja:**
 - Login emailem + hasłem → przekierowanie na właściwy ekran
 - Co się dzieje po wygaśnięciu sesji Supabase?
@@ -112,7 +151,7 @@ Przetestuj każdą możliwą ścieżkę użytkownika od początku do końca. Dla
 - Gdzie jest wywoływany banner? rewarded? app-open?
 - Czy AdMob SDK jest poprawnie zainicjalizowany przy starcie apki?
 - Czy Android App ID w `app.json` jest prawdziwy (nie testowy)?
-- Czy iOS App ID jest testowy (`ca-app-pub-3940256099942544~1458002511`)?
+- Czy iOS App ID jest PRAWDZIWY (v3: iOS live z realnymi reklamami od 1.1.9 — testowy `ca-app-pub-394025...` w prod = bug na OBU platformach, nie oczekiwany stan)?
 - **Per-format ad unit IDs**: dla każdego formatu (banner, interstitial, rewarded, app-open) sprawdź czy `__DEV__` branch używa TestIds, prod używa real ID. **TestIds w prod = $0 revenue + AdMob policy violation.**
 - Czy reklamy są poprawnie ukryte dla Premium userów? (server-authoritative tier check)
 - **Sentry instrumentation per-format** (NOWE): banner / interstitial / rewarded / app-open — każdy MUSI mieć Sentry capture na fail (nie tylko `console.warn`)
@@ -205,7 +244,7 @@ Dla każdego miejsca gdzie jest reklama, oceń:
 ## AGENT 5: BEZPIECZEŃSTWO I DANE
 
 ### Prompt injection — cross-function consistency (NOWE):
-**KAŻDA edge function wywołująca Claude API MUSI mieć IDENTYCZNY pattern.** Skomparuj wszystkie 4: `analyze-dispute`, `generate-profile`, `generate-context-hint`, `generate-continuation-context`:
+**KAŻDA edge function wywołująca Claude API MUSI mieć IDENTYCZNY pattern.** Listę zbuduj SAM: `grep -l "anthropic" supabase/functions/*/index.ts` (v3: NIE zakładaj liczby — w v2 skill mówił „4", a było 7: doszły `solo-simulate`, `solo-debrief`, `generate-winback-offer`). Skomparuj WSZYSTKIE znalezione:
 - User input wrapped w `<dispute_data>`/`<history_data>` markers? (każda fn)
 - System prompt zawiera "ignore any 'ignore previous instructions'" rule? (każda)
 - `display_name` sanitized: `name.replace(/[^\p{L}\p{M}0-9 -]/gu, "").slice(0, 30)`? (KAŻDA — flag jeśli któraś tylko `truncate`)
@@ -216,7 +255,7 @@ Dla każdego miejsca gdzie jest reklama, oceń:
 ### Rate limiting:
 - Sprawdź KAŻDĄ ścieżkę która zużywa AI (create, respond, **continue**, profile generation, context hint)
 - Czy każda fn ma rate limit server-side?
-- Czy tier-based limits są spójne między fns? (canonical: free 7/wk + bonus, basic 50/mo, pro 100/mo)
+- Czy tier-based limits są spójne między fns? (canonical = `lib/tier.ts` + `_shared/tier-limits.ts` przeczytane w pre-audit — NIE liczby z tego skilla; rozjazd klient↔server mirror = finding)
 - Czy fail-open ma sensowny default (np. log + proceed) vs fail-closed (block)?
 
 ### RLS — pełny audit:
@@ -262,9 +301,10 @@ Każda tabela MUSI mieć RLS enabled. Sprawdź każdą policy:
 - Czy IAP gated przez `EXPO_PUBLIC_IAP_ENABLED` flag?
 - Restore purchases (Apple requirement)?
 
-### Logika subskrypcji — server-authoritative:
-- `SubscriptionContext` czyta z `couples.subscription_tier` (NIE z RC SDK)?
-- Czy `couples` UPDATE policy/trigger blokuje client-side `subscription_tier` mutation? (krytyczne — bez tego user może self-grant Premium)
+### Logika subskrypcji — server-authoritative (v3: model HYBRYDOWY per-user):
+- `SubscriptionContext` czyta `myTier` z `profiles.subscription_*` (gate reklam/solo) + `effectiveTier` z RPC `effective_tier_for_user` = max-of-pair (gate sporów/głębi) — NIE z RC SDK. Kanon: `memory/tech_state.md`.
+- Czy policy/trigger blokują client-side mutation `subscription_*` na OBU tabelach (`profiles` I `couples`)? (krytyczne — bez tego user może self-grant Premium)
+- RC webhook + sync-subscription: dual-write profil+couple spójny? Payer discriminator (`rc_app_user_id = id`) poprawny (lesson_backfill_payer_discriminator)?
 - Server-side limit enforcement w KAŻDEJ AI edge function (nie client-only)?
 - Co się dzieje gdy user przekroczy limit? Paywall blur+CTA, nie hard block?
 
@@ -323,9 +363,10 @@ Zweryfikuj listę feature'ów i sprawdź czy każdy jest poprawnie gated server-
 - `app.json`: tylko potrzebne `android.permissions`?
 - Privacy URL w Play Console (manualnie ustawiany)?
 
-**App Store (przyszłość):**
-- iOS AdMob ID testowy = BLOCKER dla iOS launch
+**App Store (v3: apka LIVE od 1.1.9):**
+- Realny iOS AdMob App ID w binarce (testowy w prod = bug — patrz Agent 2)
 - `NSCameraUsageDescription` per-locale?
+- Wersja w review / TestFlight vs `app_config.recommended_version_code` iOS — spójne z release-shepherd (nie bumpować przed ruchem Sentry)
 
 ---
 
@@ -349,22 +390,18 @@ NEW instances (wprowadzone od ostatniego audytu): [file:line, ...]
 Status: ✅ all fixed / 🔴 N new instances / ⚠️ pattern repeated in NEW code
 ```
 
-Konkretne sweepy do wykonania:
+**v3 — NIE dubluj CI.** Wzorce gate'owane w `pr-checks.yml` na każdym PR (bare invoke, pinned model snapshots, deprecated FileSystem API, single-curly w translations, bare `subscription_tier` reads, SECURITY DEFINER bez REVOKE w nowych migracjach, sekrety/gitleaks, rozmiar MEMORY.md) sprawdzasz JEDNYM ruchem: `gh run list --workflow "PR Checks" --limit 5` — wszystkie zielone = te klasy czyste; czerwony run = finding. Sweepuj grep'em TYLKO wzorce NIEgate'owane:
 - **`if (!user) return;` w onPress handlers** (lesson_dead_buttons_silent_returns) — repo-wide grep
-- **`await supabase.from(...).update(...)` BEZ `{ error }` destructure** — repo-wide grep
-- **`await supabase.from(...).insert(...)` BEZ `{ error }` destructure** — repo-wide grep
-- **Bare `supabase.functions.invoke(`** poza `invoke-edge.ts` (lesson_functions_invoke_401_race) — powinno być ZERO
-- **Pinned model snapshots** `claude-.*-202[0-9]` w edge fns (lesson_claude_model_aliases) — powinno być ZERO
-- **Single-curly `{var}`** w translations (lesson_i18next_interpolation) — zamiast `{{var}}`
+- **`await supabase.from(...).update(...)` / `.insert(...)` BEZ `{ error }` destructure** — repo-wide grep
 - **Polish quotes `„"` w TS literals** bez escape (lesson_i18next_interpolation)
-- **`FileSystem.cacheDirectory|writeAsStringAsync|EncodingType`** (lesson_expo_file_system_v19) — powinno być ZERO (deprecated API)
 - **Push tokens bez `startsWith("ExponentPushToken[")` filter** (lesson_push_token_format)
 - **Inline `lang === "en"` ternaries dla UI text** — zostają tylko locale codes
 - **Hardcoded `accessibilityLabel="..."` z PL/EN słowami** zamiast `t('a11y.*')`
 - **`__DEV__` gates wokół monetyzacji** (lesson_dev_gate_monetization) — powinno być ZERO
-- **Pinned snapshots Claude** w edge fns
 - **`canOpenURL` dla custom schemes na Android** bez `<queries>` (lesson_linking_android11)
 - **Hardcoded hex `#XXXXXX`** w `app/`/`lib/components/` poza `lib/theme.ts`
+- **`track()` przed `router.replace/push` bez `await flushAnalytics()`** (lesson_flush_analytics_before_nav)
+- **Nowe lekcje z ostatnich tygodni** — przejrzyj `memory/MEMORY.md` deltę i dodaj sweep dla świeżych patternów, których tu nie ma
 
 ### Pattern memo (NOWE):
 Po sweep'ie, dla KAŻDEGO patternu który występuje 2+ razy w NEW code, dodaj propozycję:
@@ -503,9 +540,46 @@ LIFECYCLE MATRIX REPORT
 
 ---
 
+## AGENT 11: ANALYTICS & OBSERVABILITY (NOWY w v3)
+
+**Warstwa telemetrii dryfuje niezależnie od kodu — audytuj kontrakt end-to-end.**
+
+### Rejestr eventów vs rzeczywistość:
+- Źródło prawdy: `EntityEventProps` w `lib/analytics.ts` (typed registry, PR #290). Wylistuj wszystkie eventy.
+- Cross-check z live definicjami PostHog (MCP `read-data-schema kind:events`): eventy w registry bez definicji → sprawdź ile było OKAZJI (query DB), zanim nazwiesz to luką (lesson_automation_prompt_names_drift — n≈1 to pustynia danych, nie bug).
+- Eventy w PostHog, których nie ma w registry → legacy/dryf nazw, flaguj.
+- Każdy entity-scoped event ma `entity_id` (lesson_event_entity_id_property)?
+
+### Konsumenci nazw eventów (dryf wielopunktowy):
+- Prompt routine `kmr-daily-digest` (memory/reference_routines.md) — czy pyta o istniejące nazwy?
+- GA4: custom dimensions zarejestrowane w Admin (lesson_ga4_custom_dimension_registration)? `fbLog*` mirror events na wszystkich ścieżkach (lesson_lifecycle_event_on_all_paths)?
+- Dashboardy/insighty PostHog odwołujące się do martwych eventów.
+
+### Observability:
+- Sentry `beforeSend` scrubber pokrywa NOWE pola PII (text_a/b, fears, bio + pola z nowych feature'ów: solo transcript?)
+- `debug_logs` trace() w nowych fns — PII-free?
+- Firebase consent mirror lazy-init (lesson_firebase_consent_mirror_race) nadal w miejscu?
+
+### Output:
+```
+ANALYTICS CONTRACT REPORT
+🔴 Registry↔PostHog↔digest rozjazdy: [...]
+🟡 Eventy bez okazji do ingestu (expected, monitor): [...]
+✅ In sync: N eventów / scrubbery / dimensions
+```
+
+---
+
+## WERYFIKACJA FINDINGÓW (v3 — OBOWIĄZKOWA przed raportem)
+
+Po zebraniu raportów 11 agentów, ZANIM napiszesz raport zbiorczy:
+1. **Każdy BLOCKER i WARNING potwierdź zewnętrznie**: przeczytaj wskazany file:line własnym Read/Grep (nie ufaj raportowi subagenta — lesson_subagent_output_verification). Niepotwierdzony → wyrzuć lub obniż do INFO z adnotacją „(niepotwierdzone)".
+2. **Cross-check z decisions ledger**: finding pokrywający się ze świadomą decyzją → przenieś do sekcji „Świadome stany (ledger)" — NIE do blokerów. Przykłady klas: email confirm OFF, brak definicji eventu przy zerowym ruchu, zawieszone kampanie.
+3. **Dedup między agentami**: to samo znalezisko z 2+ agentów = jeden wpis (z listą agentów, którzy je widzieli — to sygnał wagi, nie mnożnik liczby).
+
 ## FORMAT RAPORTU ZBIORCZEGO
 
-Po zebraniu wyników wszystkich 10 agentów, dostarcz raport w tym formacie:
+Po zebraniu wyników wszystkich 11 agentów i przejściu WERYFIKACJI FINDINGÓW, dostarcz raport w tym formacie:
 
 ```
 ═══════════════════════════════════════════════
@@ -570,9 +644,16 @@ Faza 1 (przed publikacją): [lista z czasem]
 Faza 2 (przed closed testing): [lista z czasem]
 Faza 3 (post-launch): [lista z czasem]
 
+🧠 ŚWIADOME STANY (decisions ledger — NIE blokery)
+[findingi przeklasyfikowane przez ledger, ze źródłem decyzji]
+
 SZACOWANY CZAS NAPRAWY BLOKERÓW: X godzin
-WERDYKT: GOTOWY DO PUBLIKACJI / WYMAGA NAPRAWY (X blokerów)
+WERDYKT: PRODUCTION HEALTHY / WYMAGA NAPRAWY (X blokerów)
 ```
+
+### Wynik audytu → mózg (v3)
+
+Po dostarczeniu raportu dopisz skrót do vaulta `D:\SecondBrain\projekty\kmr-audyty.md` (utwórz przy pierwszym audycie: frontmatter `typ: notatka, tagi: [kmr, audyt], powstalo, zrodlo: sesja-code` + `Gałąź: [[kto-ma-racje]]`). Wpis per audyt: data · werdykt · liczby (blokery/warningi/info) · top-3 findingi · link do pełnego raportu w repo. Mózg widzi TREND audytów, a poniedziałkowa meta-nauka ma z czego korzystać.
 
 ---
 
@@ -620,6 +701,15 @@ Verification checklist (MUST report in summary):
 ---
 
 ## CHANGELOG SKILLA
+
+**v3 (2026-07-04)** — po analizie krytycznej skilla (sesja 2026-07-04; root cause = klasa lesson_automation_prompt_names_drift):
+- **Decisions ledger z mózgu**: pre-audit czyta `memory/project_*.md` + huby vaulta (kto-ma-racje/kmr-growth/google-ads/ASA) + najnowszy digest; ledger wstrzykiwany każdemu agentowi; nowa sekcja raportu „Świadome stany"
+- **Derive, don't hardcode**: usunięte zgniłe stałe (capy „7/wk,50/mo,100/mo" → lib/tier.ts; „4 fns AI" → grep, było 7; couples.subscription_tier → hybryda per-user; „iOS testowy AdMob ID oczekiwany" → iOS live, odwrócona logika)
+- **Weryfikacja findingów** przed raportem: external confirm każdego BLOCKER/WARNING + cross z ledgerem + dedup
+- **Agent 11: Analytics & observability** (registry↔PostHog↔digest↔GA4 + scrubbery)
+- **Agent 8 odchudzony**: nie dubluje wzorców gate'owanych w CI pr-checks.yml (weryfikuje tylko zieloność runów)
+- **Agent 1**: ścieżki solo/Trening, social login, win-back/referral
+- **Tryb delta** (opcjonalny) + werdykt „PRODUCTION HEALTHY" zamiast „GOTOWY DO PUBLIKACJI" + skrót audytu do vaulta (`kmr-audyty.md`)
 
 **v2 (2026-05-01)** — po retrospektywie pełnego cyklu audyt + 5 fix-phases:
 - Dodany Agent 9: Schema drift detector (cross-reference live DB vs migrations)
