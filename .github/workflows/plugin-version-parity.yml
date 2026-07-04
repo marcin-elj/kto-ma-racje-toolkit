@@ -1,0 +1,17 @@
+name: Plugin version parity
+
+# Zapobiega silent no-op `claude plugin update` (lesson_plugin_version_drift_two_manifests):
+# wersja w plugin.json MUSI == wersja w marketplace.json plugins[].version.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  version-parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: plugin.json == marketplace.json version
+        run: python3 scripts/check_plugin_version_parity.py
