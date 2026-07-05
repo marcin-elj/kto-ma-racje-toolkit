@@ -144,30 +144,33 @@ Zapisane lekcje:
 _(Historyczne: do 2026-07-04 obowiązywał ALWAYS-CONFIRM gate — zniesiony
 jawną decyzją Marcina w sesji 2026-07-04.)_
 
-### Krok 7: MEMORY.md index update (jeśli nowa lekcja)
+### Krok 7: MEMORY.md map-guard (NIE dodawaj linii indeksu)
 
-> **PRZEJŚCIOWE (do cutoveru Fazy 3 memory brain routera).** Dopóki `MEMORY.md`
-> to płaski indeks — dodaj one-liner (poniżej). Front-matter grafu (Krok 4) jest
-> RÓWNOLEGLE obowiązkowy. **Po cutoverze `MEMORY.md`→mapa** ten krok znika: nowa
-> lekcja NIE dostaje linii indeksu (odkrywalność = front-matter + `recall.py`),
-> a `MEMORY.md` ruszasz TYLKO gdy dochodzi cała nowa `kategoria`. Wtedy zamień ten
-> krok na map-guard (`MEMORY.md` musi zostać ≤ ~8 KB).
+> **Po cutoverze Fazy 3 (2026-07-05) `MEMORY.md` to MAPA/router, NIE płaski indeks.**
+> Nowa lekcja NIE dostaje linii w `MEMORY.md` — odkrywalność zapewnia front-matter
+> grafu (Krok 4: `kategoria`/`tagi`/`krytyczna`) + case w `recall_cases.yaml` +
+> `recall.py`. To domyka klasę „append-only indeks → sufit ~24 KB".
 
-Po zapisie nowej lekcji:
-1. Read `MEMORY.md`
-2. Dodaj one-liner w odpowiedniej sekcji (Lessons / Process / Project)
-3. Format: `- [<title>](<file>.md) — <hook keyword + jednozdaniowa esencja>`
-4. **Optymalizuj pod recognition** — keyword który mam zobaczyć w kodzie aby skojarzyć z lekcją
+**Czego NIE robić:** nie czytaj mapy po to, by dopisać `- [<title>](<file>.md) — …`.
+Kuszące „pomogę i zaktualizuję indeks" wskrzesza płaski spis → mapa puchnie z powrotem.
 
-Limit: MEMORY.md ≤ **24 400 B** (twardy gate CI `memory-index-size` w `.github/workflows/pr-checks.yml`; WARN od 23 500 B — skalibrowany na punkt ucięcia SessionStart auto-load). Przy przekroczeniu: konsolidacja wpisów do formatu „keyword — one-liner ≤200 znaków" (`/anthropic-skills:consolidate-memory`); detale należą do plików lekcji, nie do indeksu.
+**Co zrobić:**
+1. `MEMORY.md` ruszasz **TYLKO** gdy lekcja wprowadza całą NOWĄ `kategoria`
+   (rzadko) — wtedy dodaj wiersz do tabeli kategorii w mapie + wpis do
+   `memory/_categories.txt`.
+2. W innym wypadku mapy **nie dotykasz**.
+3. Map-guard: `MEMORY.md` musi zostać **≤ 8192 B** (gate CI `memory-index-size` w
+   `.github/workflows/pr-checks.yml`, ODWRÓCONY 2026-07-05 na map-stays-a-map:
+   FAIL > 8192 B, WARN > 6144 B). Jeśli mapa przebija limit → wraca płaski spis:
+   usuń dopisane linie lekcji (detale należą do plików lekcji + `recall.py`).
 
 ### Krok 8: Confirm save + close
 
 Po zapisie potwierdź userowi:
 ```
 ✅ Saved: <path>
-Index updated: <one-liner added/refreshed>
-Active in next session via SessionStart hook pluginu (`${CLAUDE_PLUGIN_ROOT}/hooks/auto-load-lessons-kmr.cmd`); w sesjach remote-control (cloud, gdzie `.cmd` nie odpala) — przez `/session-start`.
+Discoverable via: front-matter (kategoria/tagi) + recall_cases.yaml + recall.py (bez linii w MEMORY.md)
+Active in next session via SessionStart hook pluginu (`${CLAUDE_PLUGIN_ROOT}/hooks/auto-load-lessons-kmr.cmd`) + UserPromptSubmit recall hook; w sesjach remote-control (cloud, gdzie `.cmd` nie odpala) — przez `/session-start`.
 ```
 
 ## Heuristyki jakości lekcji
@@ -193,7 +196,7 @@ Zanim invoke'uję ten skill, zadaj sobie:
 ## Integracja z innymi skillami
 
 - **`full-audit` v2**: na końcu każdej fazy audytu (Faza 1/3/4/5/...) explicit wskazuje "now invoke lessons-update". Dodaj sentence do report sekcji "PLAN NAPRAWY" w full-audit.
-- **`anthropic-skills:consolidate-memory`**: gdy MEMORY.md zbliża się do 24 400 B (gate CI), ten skill prosi o uruchomienie consolidate-memory zamiast dalej dorzucać.
+- **`anthropic-skills:consolidate-memory`**: po cutoverze 2026-07-05 `MEMORY.md` to mapa ~4 KB (map-guard FAIL > 8192 B) — nie rośnie z liczbą lekcji, więc rutynowa konsolidacja indeksu odpada. Consolidate-memory zostaje narzędziem do sprzątania KORPUSU (dedupe/merge lekcji), nie mapy.
 - **`session-summary`**: na koniec sesji może wywołać lessons-update jako ostatni step.
 
 ## Auto-detect project
@@ -220,7 +223,7 @@ Lessons review:
 - Saved: M nowych / K updated existing
 - Skipped: J (reasons listed)
 
-MEMORY.md: <linecount> linii (limit 200), <KB>KB
+MEMORY.md: <KB>KB (mapa/router; map-guard limit 8 KB — nietknięta chyba że nowa kategoria)
 
 Co poszło najlepiej w tej sesji: <jedna fraza>
 Co najbardziej kosztowało: <jedna fraza>
