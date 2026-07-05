@@ -52,6 +52,37 @@ def find_repo_memory(start: str, max_levels: int = 12) -> str | None:
     return None
 
 
+def _fm_fields(path: str):
+    """Zwraca (krytyczna: bool, kategoria: str, summary: str) z front-mattera.
+
+    Minimalny, self-contained parser (hook nie importuje recall.py z repo).
+    summary = description (RECONCILE) LUB skrot. Brak front-mattera => nie-krytyczna.
+    """
+    try:
+        with open(path, encoding="utf-8") as f:
+            text = f.read()
+    except OSError:
+        return False, "", ""
+    if not text.startswith("---"):
+        return False, "", ""
+    end = text.find("\n---", 3)
+    header = text[3:end] if end != -1 else text[3:]
+    kry, kat, desc, skrot = False, "", "", ""
+    for line in header.splitlines():
+        k, _, v = line.partition(":")
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k == "krytyczna" and v.lower() == "true":
+            kry = True
+        elif k == "kategoria":
+            kat = v
+        elif k == "description":
+            desc = v
+        elif k == "skrot":
+            skrot = v
+    return kry, kat, (desc or skrot)
+
+
 def main() -> None:
     # CWD guard
     cwd = os.getcwd().replace("\\", "/").lower()
@@ -87,18 +118,19 @@ def main() -> None:
     # 2. All feedback_*.md (process rules)
     files.extend(sorted(glob.glob(os.path.join(memory_dir, "feedback_*.md"))))
 
-    # 3. Meta-lessons — cross-cutting anti-patterns that apply to ANY task.
-    # Specific technical lessons load lazily via Read.
-    meta_names = [
-        "lesson_audit_self_report_distrust.md",
-        "lesson_anti_pattern_repo_sweep.md",
-        "lesson_schema_drift_check.md",
-        "lesson_gitbash_windows_tooling.md",
-    ]
-    for name in meta_names:
-        path = os.path.join(memory_dir, name)
-        if os.path.isfile(path):
-            files.append(path)
+    # 3. HOTLIST — lekcje krytyczna:true zbierane DATA-DRIVEN (flaga na wezle,
+    # zero hardcoded nazw). Zastepuje statyczna liste meta-lekcji, ktora cicho
+    # gnila: referencja do przemianowanego lesson_audit_self_report_distrust
+    # ladowala 3 z 4. Ladujemy SUMMARY (nie pelna tresc) — lean reminder net;
+    # pelna tresc on-demand przez memory/recall.py / Read (filozofia map/router).
+    hotlist: list[str] = []
+    for pat in ("lesson_*.md", "project_*.md", "reference_*.md", "checklist_*.md"):
+        for path in sorted(glob.glob(os.path.join(memory_dir, pat))):
+            kry, kat, summ = _fm_fields(path)
+            if kry:
+                hotlist.append(
+                    "- %s [%s] — %s"
+                    % (os.path.basename(path)[:-3], kat or "?", summ))
 
     # Dedup preserving order
     seen: set[str] = set()
@@ -120,8 +152,14 @@ def main() -> None:
         except Exception:
             continue
 
-    if not parts:
+    if not parts and not hotlist:
         sys.exit(0)
+
+    if hotlist:
+        parts.append(
+            "===== HOTLIST (krytyczna:true — nieodwracalne/kosztowne, ZAWSZE w "
+            "glowie; pelna tresc: `python memory/recall.py <slowa>` lub Read) =====\n"
+            + "\n".join(hotlist))
 
     intro = (
         f"Auto-loaded for kto-ma-racje session (source: {source}).\n\n"
@@ -129,14 +167,13 @@ def main() -> None:
         "1. working_memory.md = current operational state (focus, in-flight, "
         "decisions). Edit directly without confirm.\n"
         "2. feedback_*.md = process rules. Apply proactively.\n"
-        "3. meta-lessons (audit_self_report, anti_pattern_sweep, schema_drift, "
-        "gitbash_tooling) = cross-cutting anti-patterns. Apply to ANY task.\n\n"
-        "Specific technical lessons (FCM, push tokens, expo-file-system, claude "
-        "model aliases, deep link routes, dead buttons, debug_logs, dev gates, "
-        "EAS build, i18next, Android linking, Play Console, push token format, "
-        "credentials gitignore) are NOT loaded. MEMORY.md index triggers "
-        "recognition by keyword; read the file via the Read tool when a match "
-        "appears in the current task.\n\n"
+        "3. HOTLIST = lekcje krytyczna:true (data-driven z front-mattera) — "
+        "nieodwracalne/kosztowne patterny (security / RLS / RODO / gate / "
+        "verify-jwt / external-verify / data-loss). SUMMARY tylko.\n\n"
+        "Pozostale lekcje NIE sa auto-loadowane — odkrywalne przez "
+        "`python memory/recall.py <rzeczowniki>` (hook UserPromptSubmit podrzuca "
+        "kandydatow z promptu) albo MEMORY.md; czytaj pelny plik przez Read gdy "
+        "trafienie pasuje do biezacego zadania.\n\n"
     )
 
     payload = {

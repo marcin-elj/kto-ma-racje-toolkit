@@ -50,6 +50,18 @@ Przed dispatchem wyprowadź i wklej agentom:
 - **Model subskrypcji**: `memory/tech_state.md` (2026-07: hybryda per-user — `profiles.subscription_*` + RPC `effective_tier_for_user` max-of-pair)
 - **Stan CI**: `gh run list --limit 5` — jeśli pr-checks czerwone, to finding sam w sobie
 
+### Recall lekcji (mózg) — przed dispatchem (Plan 3, wzmocnienie (c))
+
+Zamiast czytać wszystkie `lesson_*.md` (checklist pkt 6), odpal impuls na obszary audytu i **wstrzyknij trafienia do promptów agentów** (jak decisions ledger):
+```bash
+python memory/recall.py rls delete edge deploy verify jwt      # Agent DB/RLS
+python memory/recall.py auth session signin race spinner       # Agent auth/session
+python memory/recall.py push notification analytics posthog    # Agent analytics
+python memory/recall.py build eas vc testflight altool         # Agent build/release
+# …jeden impuls per wymiar audytu
+```
+Dla obszarów security / RLS / RODO / deploy recall jest **OBOWIĄZKOWY**. Lekcje `krytyczna:true` są już w hotliście (auto-load przez SessionStart hook) — recall domyka resztę. Wypisz jawnie, co podniósł, i przekaż odpowiednim agentom.
+
 Uruchom **11 agentów równolegle**, każdy na innym obszarze. Zbierz wszystkie wyniki i dostarcz jeden zbiorczy raport z priorytetami BLOCKER / WARNING / INFO.
 
 ### Tryb delta (opcjonalny)
