@@ -67,13 +67,18 @@ Jeśli nie istnieje:
 
 **Filename convention**: `lesson_<short_topic>.md` (lub `feedback_*` jeśli to feedback procesowy, nie technical anti-pattern).
 
-**Template**:
+**Template** (front-matter grafu OBOWIĄZKOWY od Plan 3 — gate `memory-brain`/lint
+w `pr-checks.yml` FAILuje lekcję bez `kategoria`/niepustych `tagi`/summary):
 
 ```markdown
 ---
-name: <short title — pasuje do MEMORY.md one-linera>
-description: <jednozdaniowy trigger phrase — keyword który mam zobaczyć w przyszłym kodzie>
+name: <short title>
+description: <keyword-rich summary — TO jest summary recall (recall.py reużywa description); słowa którymi impuls faktycznie pada, PL+EN, ~1 zdanie>
 type: lesson | feedback
+kategoria: <jedna z memory/_categories.txt: process-discipline | auth-session | ui-rn-runtime | push | analytics | db-rls | ads-monetization | iap-pricing | build-eas-store | tooling-devenv | project-decision | reference-infra | release-checklist | marketing | pricing | integrations>
+tagi: [<słowa-triggery którymi ktoś SZUKA tej lekcji — PL+EN, np. rls, delete, supabase, rodo>]
+krytyczna: <true TYLKO gdy nieodwracalne/kosztowne (security/RLS/RODO/gate/verify-jwt/external-verify/data-loss) → trafia do hotlistu always-load; inaczej false>
+powiazane: [<opcjonalnie lesson_x bez .md; rośnie on-touch>]
 ---
 
 **Reguła**: <jednozdaniowa zasada do zapamiętania>
@@ -89,6 +94,13 @@ type: lesson | feedback
 **Occurrences**:
 - <data> — <session ID jeśli masz, inaczej krótki opis>: <co się stało>
 ```
+
+> **Strażnik odkrywalności (spec §11): NOWA lekcja = NOWY case.** Dopisz parę
+> `impuls → [lesson_slug]` do `memory/tests/recall_cases.yaml` i sprawdź, że
+> `python memory/tests/recall_score.py` nadal PASS (lekcja jest w top-5 dla swojego
+> impulsu). Jeśli miss → dopracuj `tagi`/`description`. To gate `memory-brain` (krok 5).
+>
+> **`skrot` tylko fallback:** gdy z jakiegoś powodu nie ma `description`, użyj `skrot: "..."` (≤200 znaków). Preferuj `description` (reconcile — jedno pole = summary + trigger).
 
 ### Krok 5: Update existing lesson
 
@@ -133,6 +145,13 @@ _(Historyczne: do 2026-07-04 obowiązywał ALWAYS-CONFIRM gate — zniesiony
 jawną decyzją Marcina w sesji 2026-07-04.)_
 
 ### Krok 7: MEMORY.md index update (jeśli nowa lekcja)
+
+> **PRZEJŚCIOWE (do cutoveru Fazy 3 memory brain routera).** Dopóki `MEMORY.md`
+> to płaski indeks — dodaj one-liner (poniżej). Front-matter grafu (Krok 4) jest
+> RÓWNOLEGLE obowiązkowy. **Po cutoverze `MEMORY.md`→mapa** ten krok znika: nowa
+> lekcja NIE dostaje linii indeksu (odkrywalność = front-matter + `recall.py`),
+> a `MEMORY.md` ruszasz TYLKO gdy dochodzi cała nowa `kategoria`. Wtedy zamień ten
+> krok na map-guard (`MEMORY.md` musi zostać ≤ ~8 KB).
 
 Po zapisie nowej lekcji:
 1. Read `MEMORY.md`
