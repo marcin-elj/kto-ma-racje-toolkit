@@ -100,6 +100,20 @@ powiazane: [<opcjonalnie lesson_x bez .md; rośnie on-touch>]
 > `python memory/tests/recall_score.py` nadal PASS (lekcja jest w top-5 dla swojego
 > impulsu). Jeśli miss → dopracuj `tagi`/`description`. To gate `memory-brain` (krok 5).
 >
+> ⚠️ **`recall_score.py` NIE WYSTARCZA — odpal OBA** (poprawka 2026-07-15):
+> ```bash
+> python memory/tests/recall_score.py            # lekcja trafia we własny impuls
+> python -m unittest discover -s scripts/tests   # NIE POMIJAJ — łapie próg szumu
+> ```
+> **Dlaczego**: `recall.py` dopasowuje **podciągi** (`if term in strong_hay` na sklejce
+> `name+description+kategoria+tagi+skrot`). Krótki generyczny tag (`termin`, `stan`, `bug`)
+> łapie **nonsensowny prompt** z `scripts/tests/test_recall_prompt_hook.py` i wywala gate
+> progu szumu („brak mocnych trafień ⇒ cisza"). `recall_score.py` tego **nie widzi** —
+> sprawdza tylko, czy lekcja trafia w swój impuls. 2026-07-15: tag `termin` przeszedł
+> `recall_score` lokalnie i zafailował `memory-brain` w CI. Unikaj krótkich, generycznych
+> tagów; sprawdzaj podciągi (`przeterminowany` zawiera `termin`).
+> Kanon: `lesson_rada_bez_ustalenia_stanu` (fasetka o podciągach).
+>
 > **`skrot` tylko fallback:** gdy z jakiegoś powodu nie ma `description`, użyj `skrot: "..."` (≤200 znaków). Preferuj `description` (reconcile — jedno pole = summary + trigger).
 
 ### Krok 5: Update existing lesson
