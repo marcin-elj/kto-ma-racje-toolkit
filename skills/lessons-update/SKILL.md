@@ -104,13 +104,29 @@ powiazane: [<opcjonalnie lesson_x bez .md; rośnie on-touch>]
 
 ### Krok 5: Update existing lesson
 
-Jeśli pattern się powtórzył, dopisz **nowy occurrence** do istniejącej lekcji:
+Jeśli pattern się powtórzył — **NAJPIERW zbumpuj licznik we front-matterze** (P1,
+2026-07-15: zliczanie w polach, nie w prozie — proza nie jest grep-owalna dla
+automatów, licznik jest):
+
+```yaml
+wystapienia: 2            # bump o 1 (jeśli pola nie ma — dodaj z wartością 2:
+                          #  oryginalny case + ten nawrót)
+ostatnie: RRRR-MM-DD      # data DZISIEJSZEGO nawrotu
+automat: <mechanizm>      # OBOWIĄZKOWE przy wystapienia>=2 (gate lint_frontmatter
+                          #  failuje bez tego pola). Wpisz istniejący mechanizm
+                          #  ("gate X (plik, testy)") albo jawnie "brak (<plan>)"
+```
+
+Potem dopisz **nowy occurrence** do prozy (narracja zostaje — licznik jej nie zastępuje):
 
 ```markdown
 **Occurrences**:
 - 2026-04-25 — original case: <opis>
 - 2026-05-02 — <new case>: <co się stało, czemu pattern się powtórzył mimo lekcji>
 ```
+
+> Dług (wystapienia>=2 + automat "brak…") raportuje `python scripts/report_automation_debt.py`
+> — konsumowany przez tygodniową konsolidację i poniedziałkową meta-naukę.
 
 Plus jeśli reflection ujawnia **nową fasetę patternu** której wcześniej nie było:
 - Dopisz do **How to apply** nowy bullet
