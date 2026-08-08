@@ -15,3 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: plugin.json == marketplace.json version
         run: python3 scripts/check_plugin_version_parity.py
+
+      # Auto-load, ktory nie miesci sie w progu harnessu, nie dostarcza NICZEGO —
+      # do 0.5.0 hook wozil 47 979 znakow przy progu (9 600, 9 999] i konczyl exit 0
+      # przez ~198 sesji. Test pilnuje budzetu I jawnosci przyciecia.
+      - name: budzet auto-loadu + jawnosc przyciecia
+        run: python3 tests/test_autoload_budget.py

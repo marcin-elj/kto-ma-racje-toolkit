@@ -20,14 +20,17 @@ Most skills are general-purpose (TDD, debugging, lessons-update). One — `full-
 
 ### `SessionStart` — `auto-load-lessons-kmr`
 
-Automatically loads operational state and meta-lessons when starting a session inside the kto-ma-racje project tree.
+A **router**, not a content dump. Contract `karta-v1` (v0.6.0):
 
-**Selective load** (~3k tokens vs ~12k full):
-- `working_memory.md` — current focus + in-flight + recent decisions
-- All `feedback_*.md` — process rules
-- 4 cross-cutting meta-lessons (audit_self_report, anti_pattern_sweep, schema_drift, gitbash_tooling)
+- **karta** — fixed-size pointers: where operational state lives, the newest session-block heading (extracted from the file, never hand-copied), the mandatory `recall.py` rule, and „don't guess live versions".
+- **`feedback_*`** — one indicator line each (name + category + truncated `description`), not the rule text.
+- **HOTLIST** — same shape, for nodes with `krytyczna: true`, collected data-driven from front-matter.
 
-Specific technical lessons (FCM, push tokens, etc.) are NOT auto-loaded — `MEMORY.md` index triggers keyword recognition; lazy-load via Read.
+**`working_memory.md` is NOT loaded** — only pointed at. It is ~41k characters and the harness drops any `additionalContext` above a **measured** threshold of (9 600, 9 999] **characters** into a file, feeding the model a ~2 KB preview (a list of filenames). Until v0.5.0 this hook composed 47 979 characters and exited 0, delivering nothing for ~198 sessions. Everything that grows now goes through `python memory/recall.py <nouns>` or Read.
+
+**Budget is enforced, and trimming is loud.** The hook measures its own output against `BUDZET_ZNAKI = 9200`; if the corpus outgrows it, HOTLIST survives before process rules (irreversible beats recoverable) and the output says explicitly how many items were dropped and how to recover them. Regression tests: `tests/test_autoload_budget.py` (run in CI).
+
+`AUTOLOAD-KONTRAKT: <name>` is printed in the output so the contract can be **verified from outside** instead of assumed.
 
 **CWD guard**: only fires when session cwd contains `kto-ma-racje`. If you fork this for another project, edit the guard in `hooks/auto-load-lessons-kmr.py`.
 
