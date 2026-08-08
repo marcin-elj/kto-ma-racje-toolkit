@@ -52,6 +52,21 @@ def find_repo_memory(start: str, max_levels: int = 12) -> str | None:
     return None
 
 
+# Limit dlugosci summary w auto-loadzie (2026-08-08). Auto-load ma byc
+# WSKAZNIKIEM („taka regula istnieje, dotyczy X"), a nie trescia — pelna tresc
+# idzie przez `memory/recall.py` albo Read. Zmierzone: bez limitu budzet calosci
+# wynosi 53 412 B przy progu ~51 200 B, powyzej ktorego harness zrzuca wynik hooka
+# do pliku i model dostaje sama liste nazw. Przy 160 znakach: 48 779 B.
+MAX_SUMMARY = 160
+
+
+def _skroc(s: str) -> str:
+    """Ucina na granicy slowa — urwane w polowie slowa summary czyta sie jak blad."""
+    if len(s) <= MAX_SUMMARY:
+        return s
+    return s[:MAX_SUMMARY].rsplit(" ", 1)[0] + "…"
+
+
 def _fm_fields(path: str):
     """Zwraca (krytyczna: bool, kategoria: str, summary: str) z front-mattera.
 
@@ -115,8 +130,21 @@ def main() -> None:
     if os.path.isfile(working):
         files.append(working)
 
-    # 2. All feedback_*.md (process rules)
-    files.extend(sorted(glob.glob(os.path.join(memory_dir, "feedback_*.md"))))
+    # 2. feedback_*.md (reguly procesu) — SUMMARY, nie pelna tresc.
+    #
+    # DLACZEGO ZMIENIONE 2026-08-08: 11 plikow feedbacku wazylo 39 927 B = 36%
+    # calego auto-loadu, a calosc (93 KB) i tak nie miescila sie w budzecie
+    # harnessu (~50 KB) — wiec model dostawal sama liste nazw, ZERO tresci reguly.
+    # Objaw: przy „mozesz opublikowac buildy" model pytal o pozwolenie, mimo ze
+    # feedback_browser_automation_marketing_consoles dawal standing zgode od
+    # 2026-07-11. Reguly sa od 2026-08-08 w NODE_GLOBS recall.py, wiec hook
+    # UserPromptSubmit podrzuca je NA TEMAT, z samych slow promptu — a tutaj
+    # zostaje sam wskaznik, ze istnieja. 39 927 B -> ~2 250 B.
+    reguly: list[str] = []
+    for path in sorted(glob.glob(os.path.join(memory_dir, "feedback_*.md"))):
+        _kry, kat, summ = _fm_fields(path)
+        reguly.append("- %s [%s] — %s"
+                      % (os.path.basename(path)[:-3], kat or "?", _skroc(summ)))
 
     # 3. HOTLIST — lekcje krytyczna:true zbierane DATA-DRIVEN (flaga na wezle,
     # zero hardcoded nazw). Zastepuje statyczna liste meta-lekcji, ktora cicho
@@ -130,7 +158,7 @@ def main() -> None:
             if kry:
                 hotlist.append(
                     "- %s [%s] — %s"
-                    % (os.path.basename(path)[:-3], kat or "?", summ))
+                    % (os.path.basename(path)[:-3], kat or "?", _skroc(summ)))
 
     # Dedup preserving order
     seen: set[str] = set()
@@ -152,8 +180,13 @@ def main() -> None:
         except Exception:
             continue
 
-    if not parts and not hotlist:
+    if not parts and not hotlist and not reguly:
         sys.exit(0)
+
+    if reguly:
+        parts.append(
+            "===== REGULY PROCESU (feedback_*) — WSKAZNIK, nie tresc; pelna regula: "
+            "`python memory/recall.py <slowa>` albo Read =====\n" + "\n".join(reguly))
 
     if hotlist:
         parts.append(
