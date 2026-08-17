@@ -2,13 +2,12 @@
 
 Personal Claude Code plugin used to develop **[Kto Ma Rację?](https://play.google.com/store)** — a couples-mediation mobile app (React Native + Expo + Supabase). Bundles the skills, hooks and audit workflows I rely on daily.
 
-Most skills are general-purpose (TDD, debugging, lessons-update). One — `full-audit` — is project-specific to "Kto Ma Rację?" and references its schema, edge functions and known anti-patterns. Use it as a template for your own audit skill, or fork it with your project's specifics.
+All skills here are general-purpose (TDD, debugging, lessons-update). The project-specific ones live in the app repo itself, under `.claude/skills/` — including `full-audit`, which moved there in v0.7.0 because it references that repo's schema, scripts and CI gates, and is versioned alongside them.
 
 ## Skills
 
 | Skill | Scope | What it does |
 |---|---|---|
-| `full-audit` | project-specific | 10-agent comprehensive audit covering flows, ads, design, i18n, security, subscriptions, integrations, anti-patterns, schema drift, lifecycle/RODO. Reports BLOCKER / WARNING / INFO. |
 | `lessons-update` | universal | Reflective pass after fix-phases / multi-file changes — captures anti-patterns, fix-induced regressions, and writes them to `memory/lesson_*.md` for the next session. |
 | `tdd-with-claude` | universal | Enforces explicit red-green-refactor (Claude defaults to implementation-first). Anti-patterns + Plan Mode integration. |
 | `subagent-driven-development` | universal | Pattern for executing implementation plans through fresh subagents with two-stage review. |
@@ -53,21 +52,9 @@ Or directly from the repo:
 ## Forking for your own project
 
 1. Fork this repo
-2. Edit `skills/full-audit/SKILL.md` — replace project-specific references (Aurora design, edge fn names, schema tables) with yours
-3. Edit `hooks/auto-load-lessons-kmr.py` — change the CWD guard string and the `memory_dir` path to match your project
-4. Bump `version` in `.claude-plugin/plugin.json`
-5. Push and `/plugin install` from your fork
-
-## Adapting `full-audit` to a different stack
-
-`full-audit` is heavily customized for React Native / Expo / Supabase. The 10-agent structure is generic but the checklists embed:
-- Aurora design pattern compliance (your design system goes here)
-- Supabase edge function consistency checks
-- EAS build / Play Console specifics
-- React Native i18n + dark mode patterns
-- RLS + RODO lifecycle matrix
-
-For a different stack, the 10-agent structure is a useful template but you'll want to rewrite each agent's checklist for your platform.
+2. Edit `hooks/auto-load-lessons-kmr.py` — change the CWD guard string and the `memory_dir` path to match your project
+3. Bump `version` in **both** `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json` — `claude plugin update` reads the marketplace one, so a stale version there is a silent no-op
+4. Push and `/plugin install` from your fork
 
 ## License
 
