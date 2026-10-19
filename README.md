@@ -13,6 +13,7 @@ All skills here are general-purpose (TDD, debugging, lessons-update). The projec
 | `subagent-driven-development` | universal | Pattern for executing implementation plans through fresh subagents with two-stage review. |
 | `agent-teams-quick-start` | universal | Decision matrix for when 2-4 parallel agents are worth the 3x token cost. |
 | `search-tools-mastery` | universal | Pick the right search tool: rg vs semantic vs symbol-aware vs AST. Decision tree + combined workflows. |
+| `aplikacja-o-prace` | universal (PL job boards) | Sending a job application through an ATS form in the in-app browser (pracuj.pl, justjoin, Traffit, Recruitify, eRecruiter, Lever, Ashby, LinkedIn Easy Apply). Gates: channel resolved at the source and fields probed before any text is written, consent before the first registering click, upload hand-off read back by `location.href` first, full DOM read before submit, success only on URL change, tracker + follow-up task in the Obsidian vault. Lives here, not in an app repo, because the forms are on third-party domains where no repo hook or CI check can see them. |
 | `vibesec` | universal | Web/mobile/API security checklist — XSS, CSRF, SQLi, IDOR, secrets, JWT, file upload, SSRF. Server-side validation always. |
 
 ## Hooks
